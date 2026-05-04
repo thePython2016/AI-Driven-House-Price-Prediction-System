@@ -3,107 +3,115 @@ import pickle as pkl
 import streamlit as st
 import numpy as np
 
-# Model and Transformer Import
+# --- 1. LOAD EXTERNAL CSS ---
+def local_css(file_name):
+    try:
+        with open(file_name) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        pass
+
+local_css("style.css")
+
+# --- 2. LOAD MODELS ---
 model = pkl.load(open("model.pkl", "rb"))
 Transformer = pkl.load(open("Transformer.pkl", "rb"))
 columns = pkl.load(open("columns.pkl", "rb"))
 
-# --- CUSTOM CSS FOR FONT SIZES & DARK MODE ---
+# --- 3. UI INITIALIZATION ---
+st.title("House Prediction App")
+st.subheader("Upload a data file to predict house price")
+
+if "predicted_file" not in st.session_state: st.session_state.predicted_file = None
+if "show_success"   not in st.session_state: st.session_state.show_success   = False
+
+# ── Dynamic Card Content ──────────────────────────────────────────────────────
+# Check if a file is currently in the uploader's session state
+if "house_uploader" in st.session_state and st.session_state.house_uploader is not None:
+    u_file = st.session_state.house_uploader
+    kb = round(u_file.size / 1024, 1)
+    size_info = f"{kb} KB" if kb < 1024 else f"{round(kb/1024,2)} MB"
+    
+    # Show file name and size instead of the prompt
+    card_html = f"""
+        <div class="upload-card" id="ucard">
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">{u_file.name}</div>
+            <div class="upload-sub">{size_info} • Ready to Predict</div>
+        </div>
+    """
+else:
+    # Show default prompt
+    card_html = """
+        <div class="upload-card" id="ucard">
+            <div class="upload-icon">☁️</div>
+            <div class="upload-title">Choose a file or drag &amp; drop it here</div>
+            <div class="upload-sub">CSV format · up to 50 MB</div>
+        </div>
+    """
+
+st.markdown(card_html, unsafe_allow_html=True)
+
+# ── The actual functional uploader (Overlayed via CSS) ────────────────────────
+fileUpload = st.file_uploader(
+    "Upload CSV",
+    type="csv",
+    key="house_uploader",
+    label_visibility="collapsed",
+)
+
+# JavaScript for Drag & Drop Highlight
 st.markdown("""
-    <style>
-    /* Adjust Header Font Sizes */
-    h1 {
-        font-size: 32px !important;
-        font-weight: 700 !important;
-    }
-    h2 {
-        font-size: 24px !important;
-        font-weight: 600 !important;
-    }
-    h3 {
-        font-size: 20px !important;
-    }
-
-    /* Adaptive Success Badge (Dark/Light Mode) */
-    :root {
-        --success-bg: #d4edda;
-        --success-text: #155724;
-        --success-border: #c3e6cb;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --success-bg: #1e4620;
-            --success-text: #9fdf9f;
-            --success-border: #2e7d32;
+    <script>
+    (function() {
+        function init() {
+            const card = document.getElementById('ucard');
+            const zone = document.querySelector('[data-testid="stFileUploadDropzone"]');
+            if (!card || !zone) { setTimeout(init, 150); return; }
+            zone.addEventListener('dragenter', () => card.classList.add('active'));
+            zone.addEventListener('dragover',  (e) => { e.preventDefault(); card.classList.add('active'); });
+            zone.addEventListener('dragleave', () => card.classList.remove('active'));
+            zone.addEventListener('drop',      () => setTimeout(() => card.classList.remove('active'), 250));
         }
-    }
-
-    .success-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background-color: var(--success-bg);
-        color: var(--success-text);
-        border: 1px solid var(--success-border);
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-    </style>
+        init();
+    })();
+    </script>
+    <div style="margin-bottom: 16px;"></div>
 """, unsafe_allow_html=True)
 
-st.title("House Prediction App")
-st.subheader("Upload a data File to Predict House Price")
-
-fileUpload = st.file_uploader("Upload File", type="csv", key="house_file_uploader")
-button = st.button("Predict Score", key="house_predict_button")
-
-# Initialize session state
-if "show_success" not in st.session_state:
-    st.session_state.show_success = False
-if "predicted_file" not in st.session_state:
-    st.session_state.predicted_file = None
-
-if button:
-    if not fileUpload:
-        st.error("Select File to Upload")
+# --- 4. PREDICTION LOGIC ---
+if st.button("Predict Score", key="predict_btn", use_container_width=True):
+    if fileUpload is None:
+        st.error("Please upload a CSV file first.")
     else:
-        file = pd.read_csv(fileUpload)
         try:
-            # Transformation logic
+            file = pd.read_csv(fileUpload)
             Transform = Transformer.transform(file)
+            
             if not isinstance(Transform, pd.DataFrame):
-                try:
-                    feature_names = Transformer.get_feature_names_out()
-                except AttributeError:
-                    feature_names = columns
-                Transform = pd.DataFrame(Transform, columns=feature_names)
-
-            missing_cols = set(columns) - set(Transform.columns)
-            if missing_cols:
-                st.error(f"Transformation produced unexpected output. Missing: {missing_cols}")
+                try:    f_names = Transformer.get_feature_names_out()
+                except: f_names = columns
+                Transform = pd.DataFrame(Transform, columns=f_names)
+            
+            if not set(columns).issubset(Transform.columns):
+                st.error("Uploaded file is missing required features.")
             else:
-                # Predicting
-                Prediction = np.expm1(model.predict(Transform[columns]))
-                # If price was log-transformed in training, use: Prediction = np.expm1(Prediction)
-                file["Predicted Price"] = Prediction
-                st.session_state.show_success = True
+                preds = np.expm1(model.predict(Transform[columns]))
+                file["Predicted Price"] = preds
                 st.session_state.predicted_file = file
-
+                st.session_state.show_success = True
+                st.rerun()
         except Exception as e:
-            st.error(f"Error during processing: {e}")
+            st.error(f"Error processing file: {e}")
 
-# Result Display Area
+# --- 5. RESULTS ---
 if st.session_state.predicted_file is not None:
     if st.session_state.show_success:
-        col1, col2 = st.columns([0.4, 0.6])
-        with col1:
-            st.markdown('<div class="success-badge">✅ Predictions done!</div>', unsafe_allow_html=True)
-        with col2:
-            if st.button("✖", key="dismiss_success", help="Dismiss"):
+        c1, c2 = st.columns([0.85, 0.15])
+        with c1:
+            st.markdown('<div class="success-badge">✅ Predictions completed successfully!</div>', unsafe_allow_html=True)
+        with c2:
+            if st.button("✖", key="clear_success"):
                 st.session_state.show_success = False
                 st.rerun()
-    
     st.dataframe(st.session_state.predicted_file, use_container_width=True)

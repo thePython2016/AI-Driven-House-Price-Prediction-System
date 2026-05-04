@@ -1,0 +1,114 @@
+/* style.css */
+h1 { font-size: 32px !important; font-weight: 700 !important; }
+h2 { font-size: 24px !important; font-weight: 600 !important; }
+
+
+.upload-card {
+    border: 2px dashed #bfc9d4;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 160px;
+    transition: border-color 0.2s, background-color 0.2s;
+    margin-bottom: 0;
+}
+
+.upload-card.active {
+    border-color: #4a90d9 !important;
+    background-color: rgba(74,144,217,0.07) !important;
+}
+
+.upload-icon  { font-size: 38px; }
+.upload-title { font-size: 17px; font-weight: 600; color: inherit; }
+.upload-sub   { font-size: 13px; color: #888; }
+
+
+div[data-testid="stFileUploader"] {
+    margin-top: -160px !important;
+    position: relative !important;
+    z-index: 10 !important;
+    height: 160px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    padding-top: 12px !important;
+    box-sizing: border-box !important;
+}
+
+div[data-testid="stFileUploader"] > div,
+div[data-testid="stFileUploadDropzone"],
+div[data-testid="stFileUploadDropzone"] > div,
+div[data-testid="stFileUploadDropzone"] button,
+div[data-testid="stFileUploadDropzone"] section {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    height: 160px !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* ── File badge ── */
+.file-badge {
+    display: flex; align-items: center; gap: 10px;
+    border: 1.5px solid #c3e6cb; background: #f0fff4;
+    border-radius: 10px; padding: 10px 16px; font-size: 14px;
+    margin-top: 12px;
+}
+
+.file-badge-name { font-weight: 600; flex: 1; word-break: break-all; }
+.file-badge-size { color: #888; font-size: 12px; white-space: nowrap; }
+
+/* ── Success badge ── */
+.success-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--sb-bg); color: var(--sb-txt);
+    padding: 6px 12px; border-radius: 4px; font-size: 14px; margin-bottom: 10px;
+}
+
+
+:root { --sb-bg: #d4edda; --sb-txt: #155724; }
+
+@media (prefers-color-scheme: dark) {
+    :root { --sb-bg: #1e4620; --sb-txt: #9fdf9f; }
+    .upload-card  { border-color: #444; }
+    .upload-title { color: #eee; }
+    .file-badge   { background: #1a2e1a; border-color: #2d5a2d; color: #ccc; }
+}
+/* --- Target the Predict Button --- */
+div[data-testid="stButton"] button {
+    background-color: #da780c; 
+    color: white;
+    border-radius: 8px;
+    border: none;
+    height: 45px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* --- Hover Effect --- */
+div[data-testid="stButton"] button:hover {
+    background-color: #357abd;
+    border-color: #357abd;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* --- Active/Click Effect --- */
+div[data-testid="stButton"] button:active {
+    transform: translateY(0);
+    background-color: #2d6699;
+}
+/* browse file button  */
+.st-emotion-cache-epvm6{
+	/* background-color:red; */
+}
