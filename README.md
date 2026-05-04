@@ -44,7 +44,7 @@ pip install -r requirements.txt
 ### 3. Run the app
 streamlit run app.py
 
-## 📥 Sample Data
+## Sample Data
 
 Use the provided `Test.csv` to test the app format.
 
