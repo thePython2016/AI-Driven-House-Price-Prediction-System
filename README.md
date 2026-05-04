@@ -34,6 +34,7 @@ A machine learning web application that predicts house prices from uploaded CSV 
 ### 1. Clone the repository
 
 git clone https://github.com/thePython2016/studentScorePredictionModel.git
+
 cd studentScorePredictionModel
 
 ### 2. Install dependencies
