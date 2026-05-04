@@ -2,9 +2,9 @@ import pandas as pd
 import pickle as pkl
 import streamlit as st
 import numpy as np
-from sklearn.preprocessing import PowerTransformer
 
-# Import Model and Transformer
+
+# Model and Transformer Import
 model = pkl.load(open("model.pkl", "rb"))
 Transformer = pkl.load(open("Transformer.pkl", "rb"))
 columns = pkl.load(open("columns.pkl", "rb"))
@@ -36,7 +36,7 @@ if button:
 
             missing_cols = set(columns) - set(Transform.columns)
             if missing_cols:
-                st.error(f"❌ Transformation produced unexpected output. Missing: {missing_cols}")
+                st.error(f"Transformation produced unexpected output. Missing: {missing_cols}")
             else:
                 Prediction = model.predict(Transform[columns])
                 file["Predicted Price"] = Prediction
@@ -44,10 +44,9 @@ if button:
                 st.session_state.predicted_file = file
 
         except Exception as e:
-            st.error(f"❌ Error during processing: {e}")
+            st.error(f"Error during processing: {e}")
 
 if st.session_state.predicted_file is not None:
-    # Show badge only if not dismissed
     if st.session_state.show_success:
         st.markdown("""
             <style>
@@ -67,11 +66,9 @@ if st.session_state.predicted_file is not None:
 
         col1, col2 = st.columns([0.4, 0.6])
         with col1:
-            st.markdown('<div class="success-badge">✅ Predictions done!</div>', unsafe_allow_html=True)
+            st.markdown('<div class="success-badge">Predictions done!</div>', unsafe_allow_html=True)
         with col2:
             if st.button("✖", key="dismiss_success", help="Dismiss"):
                 st.session_state.show_success = False
                 st.rerun()
-
-    # Table always stays visible
     st.dataframe(st.session_state.predicted_file)
